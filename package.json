@@ -11,8 +11,9 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
+    "@babel/plugin-transform-template-literals": "^7.27.1",
+    "ajv": "8.17.1",
     "turbo": "latest",
-    "typescript": "latest",
-    "ajv": "8.17.1"
+    "typescript": "latest"
   }
 }

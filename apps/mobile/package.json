@@ -16,6 +16,10 @@
     "react-native": "0.81.4"
   },
   "devDependencies": {
+    "@babel/plugin-transform-class-static-block": "^7.28.3",
+    "@babel/plugin-transform-parameters": "^7.27.7",
+    "@babel/plugin-transform-template-literals": "^7.27.1",
+    "@react-native/babel-preset": "^0.81.4",
     "@types/react": "~19.1.0",
     "typescript": "~5.9.2"
   },
