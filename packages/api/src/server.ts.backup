@@ -1,0 +1,269 @@
+import { ApolloServer } from 'apollo-server-express';
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
+// In-memory data store for testing (replace with database later)
+let products: any[] = [
+    { id: '1', name: 'T-Shirt', price: 25.99, category: 'Clothing', stock: 100 },
+    { id: '2', name: 'Jeans', price: 79.99, category: 'Clothing', stock: 50 }
+];
+
+let categories: any[] = [
+    { id: '1', name: 'Clothing', description: 'Apparel and clothing items' },
+    { id: '2', name: 'Accessories', description: 'Fashion accessories' }
+];
+
+let users: any[] = [
+    { id: '1', name: 'John Doe', email: 'john@example.com' }
+];
+
+// GraphQL Type Definitions
+const typeDefs = `
+  type Query {
+    hello: String
+    health: String
+    
+    # Product queries
+    products: [Product!]!
+    product(id: ID!): Product
+    
+    # Category queries  
+    categories: [Category!]!
+    category(id: ID!): Category
+    
+    # User queries
+    users: [User!]!
+    user(id: ID!): User
+  }
+  
+  type Mutation {
+    # Product mutations
+    createProduct(input: CreateProductInput!): Product!
+    updateProduct(id: ID!, input: UpdateProductInput!): Product!
+    deleteProduct(id: ID!): Boolean!
+    
+    # Category mutations
+    createCategory(input: CreateCategoryInput!): Category!
+    updateCategory(id: ID!, input: UpdateCategoryInput!): Category!
+    deleteCategory(id: ID!): Boolean!
+    
+    # User mutations
+    createUser(input: CreateUserInput!): User!
+    updateUser(id: ID!, input: UpdateUserInput!): User!
+    deleteUser(id: ID!): Boolean!
+  }
+  
+  # Types
+  type Product {
+    id: ID!
+    name: String!
+    price: Float!
+    category: String!
+    stock: Int!
+  }
+  
+  type Category {
+    id: ID!
+    name: String!
+    description: String
+  }
+  
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+  }
+  
+  # Input types
+  input CreateProductInput {
+    name: String!
+    price: Float!
+    category: String!
+    stock: Int!
+  }
+  
+  input UpdateProductInput {
+    name: String
+    price: Float
+    category: String
+    stock: Int
+  }
+  
+  input CreateCategoryInput {
+    name: String!
+    description: String
+  }
+  
+  input UpdateCategoryInput {
+    name: String
+    description: String
+  }
+  
+  input CreateUserInput {
+    name: String!
+    email: String!
+  }
+  
+  input UpdateUserInput {
+    name: String
+    email: String
+  }
+`;
+
+// GraphQL Resolvers
+const resolvers = {
+    Query: {
+        hello: () => 'Hello from GraphQL API!',
+        health: () => 'API is running successfully!',
+
+        // Product queries
+        products: () => products,
+        product: (_: any, { id }: { id: string }) => products.find(p => p.id === id),
+
+        // Category queries
+        categories: () => categories,
+        category: (_: any, { id }: { id: string }) => categories.find(c => c.id === id),
+
+        // User queries
+        users: () => users,
+        user: (_: any, { id }: { id: string }) => users.find(u => u.id === id)
+    },
+
+    Mutation: {
+        // Product mutations
+        createProduct: (_: any, { input }: { input: any }) => {
+            const newProduct = {
+                id: String(products.length + 1),
+                ...input
+            };
+            products.push(newProduct);
+            return newProduct;
+        },
+
+        updateProduct: (_: any, { id, input }: { id: string, input: any }) => {
+            const productIndex = products.findIndex(p => p.id === id);
+            if (productIndex === -1) throw new Error('Product not found');
+
+            products[productIndex] = { ...products[productIndex], ...input };
+            return products[productIndex];
+        },
+
+        deleteProduct: (_: any, { id }: { id: string }) => {
+            const initialLength = products.length;
+            products = products.filter(p => p.id !== id);
+            return products.length < initialLength;
+        },
+
+        // Category mutations
+        createCategory: (_: any, { input }: { input: any }) => {
+            const newCategory = {
+                id: String(categories.length + 1),
+                ...input
+            };
+            categories.push(newCategory);
+            return newCategory;
+        },
+
+        updateCategory: (_: any, { id, input }: { id: string, input: any }) => {
+            const categoryIndex = categories.findIndex(c => c.id === id);
+            if (categoryIndex === -1) throw new Error('Category not found');
+
+            categories[categoryIndex] = { ...categories[categoryIndex], ...input };
+            return categories[categoryIndex];
+        },
+
+        deleteCategory: (_: any, { id }: { id: string }) => {
+            const initialLength = categories.length;
+            categories = categories.filter(c => c.id !== id);
+            return categories.length < initialLength;
+        },
+
+        // User mutations
+        createUser: (_: any, { input }: { input: any }) => {
+            const newUser = {
+                id: String(users.length + 1),
+                ...input
+            };
+            users.push(newUser);
+            return newUser;
+        },
+
+        updateUser: (_: any, { id, input }: { id: string, input: any }) => {
+            const userIndex = users.findIndex(u => u.id === id);
+            if (userIndex === -1) throw new Error('User not found');
+
+            users[userIndex] = { ...users[userIndex], ...input };
+            return users[userIndex];
+        },
+
+        deleteUser: (_: any, { id }: { id: string }) => {
+            const initialLength = users.length;
+            users = users.filter(u => u.id !== id);
+            return users.length < initialLength;
+        }
+    }
+};
+
+async function startServer() {
+    const app = express();
+
+    // Middleware
+    app.use(cors({
+        origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+        credentials: true
+    }));
+
+    app.use(express.json());
+
+    // Create Apollo Server
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
+        introspection: true,
+        debug: process.env.NODE_ENV === 'development',
+    });
+
+    await server.start();
+    server.applyMiddleware({
+        app: app as any,
+        path: '/graphql',
+        cors: false
+    });
+
+    // REST endpoints for quick testing
+    app.get('/health', (req, res) => {
+        res.json({
+            status: 'OK',
+            service: 'Ecommerce GraphQL API',
+            timestamp: new Date().toISOString(),
+            endpoints: {
+                graphql: '/graphql',
+                health: '/health',
+                products: '/api/products'
+            }
+        });
+    });
+
+    // Quick REST endpoint for testing
+    app.get('/api/products', (req, res) => {
+        res.json({ products });
+    });
+
+    const PORT = process.env.PORT || 4000;
+
+    app.listen(PORT, () => {
+        console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+        console.log(`📊 Health check at http://localhost:${PORT}/health`);
+        console.log(`🎮 GraphQL Playground at http://localhost:${PORT}${server.graphqlPath}`);
+        console.log(`📦 Products API at http://localhost:${PORT}/api/products`);
+    });
+}
+
+startServer().catch(error => {
+    console.error('❌ Error starting server:', error);
+    process.exit(1);
+});
