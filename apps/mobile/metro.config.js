@@ -17,7 +17,10 @@ module.exports = {
     ...defaultConfig.resolver,
 
     // File extensions Metro should resolve
-    sourceExts: ["tsx", "ts", "js", "jsx", "json"],
+    sourceExts: ["tsx", "ts", "js", "jsx", "json", "cjs", "css"],
+
+    // Custom resolver to handle @swc/helpers properly
+    resolverMainFields: ["react-native", "browser", "main"],
 
     // Help Metro find modules in the root node_modules
     extraNodeModules: new Proxy(
@@ -42,6 +45,13 @@ module.exports = {
 
     // Ensure Metro can resolve modules from monorepo packages
     platforms: ["ios", "android", "native", "web"],
+
+    // Custom resolution for problematic packages
+    alias: {
+      '@swc/helpers/cjs/_class_private_field_get.cjs': path.resolve(__dirname, 'node_modules/@swc/helpers/cjs/_class_private_field_get.cjs'),
+      '@swc/helpers/cjs/_class_private_field_init.cjs': path.resolve(__dirname, 'node_modules/@swc/helpers/cjs/_class_private_field_init.cjs'),
+      '@swc/helpers/cjs/_class_private_field_set.cjs': path.resolve(__dirname, 'node_modules/@swc/helpers/cjs/_class_private_field_set.cjs'),
+    }
   },
 
   // Transform configuration

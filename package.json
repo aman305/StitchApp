@@ -7,13 +7,16 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint"
+    "dev:api": "npm run dev --workspace=@ecommerce/api",
+    "dev:mobile": "npm run start --workspace=mobile",
+    "dev:admin": "npm run develop --workspace=admin"
   },
   "devDependencies": {
     "@babel/plugin-transform-template-literals": "^7.27.1",
     "ajv": "8.17.1",
     "turbo": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "express": "^5.0.1",
+    "@types/express": "^5.0.1"
   }
 }
